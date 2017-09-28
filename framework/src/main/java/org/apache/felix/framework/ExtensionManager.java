@@ -219,6 +219,17 @@ class ExtensionManager extends URLStreamHandler implements Content
             ? Util.getDefaultProperty(logger, Constants.FRAMEWORK_SYSTEMPACKAGES)
             : syspkgs;
         syspkgs = (syspkgs == null) ? "" : syspkgs;
+
+        // If on Java 9, get capabilities for the modules and exported packages of the platform
+        StringBuilder j9modules = new StringBuilder();
+        String javaSpecVer = System.getProperty("java.specification.version");
+        if ("9".equals(javaSpecVer)) { // TODO: extend to work with versions 10+
+            StringBuilder j9packages = new StringBuilder();
+            Java9CapabilitySupport j9support = new Java9CapabilitySupport();
+            j9support.buildPlatformModuleCapabilities(j9modules, j9packages);
+            syspkgs += j9packages;
+        }
+
         // If any extra packages are specified, then append them.
         String pkgextra =
             (String) m_configMap.get(FelixConstants.FRAMEWORK_SYSTEMPACKAGES_EXTRA);
@@ -239,6 +250,7 @@ class ExtensionManager extends URLStreamHandler implements Content
             ? Util.getDefaultProperty(logger, Constants.FRAMEWORK_SYSTEMCAPABILITIES)
             : syscaps;
         syscaps = (syscaps == null) ? "" : syscaps;
+        syscaps += j9modules;
         // If any extra capabilities are specified, then append them.
         String capextra =
             (String) m_configMap.get(FelixConstants.FRAMEWORK_SYSTEMCAPABILITIES_EXTRA);
