@@ -21,6 +21,11 @@ import org.eclipse.jetty.server.*;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
@@ -54,7 +59,14 @@ class FileRequestLog {
         delegate.setLogLatency(config.isRequestLogFileLogLatency());
     }
 
-    synchronized void start(BundleContext context) throws IllegalStateException {
+    synchronized void start(BundleContext context) throws IOException, IllegalStateException {
+        File logFile = new File(logFilePath).getAbsoluteFile();
+        File logFileDir = logFile.getParentFile();
+        if (logFileDir != null && !logFileDir.isDirectory()) {
+            SystemLogger.info("Creating directory " + logFileDir.getAbsolutePath());
+            Files.createDirectories(logFileDir.toPath(), PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwx------")));
+        }
+
         if (registration != null) {
             throw new IllegalStateException(getClass().getSimpleName() + " is already started");
         }
